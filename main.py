@@ -19,10 +19,12 @@ def main():
         border_width = 1,
         highlighted_width = 3,
         input_height = int(height * 0.9 * 0.1),
-        speed = int(height * 0.9 * 0.05),
+        speed = 100,
         increment = 1,
         default_active=0,
-        font=pg.font.Font(None, int(width * 0.2 * 0.3))
+        font=pg.font.Font(None, int(width * 0.2 * 0.3)),
+        fps=60,
+        gen_frequency=500
     )
     game = Game(config)
     game.run()
