@@ -36,12 +36,13 @@ class Config:
                 self.font = font
 
 # Equation which falls from the top of the screen
-class Equation():
+class Equation(pg.sprite.Sprite):
 
     operands = [str(i) for i in range(1, 10)] # Possible operands
     operations = ['+', '-', '*'] # Possible operators
 
-    def __init__(self, col, ops, font):
+    def __init__(self, col, ops, font, eq_group):
+        super().__init__(eq_group)
         self.ops = ops # How many operands equation contains
         self.repr = random.choice(self.operands) # String representation of the equation
                                                  # operand-operation-operand-...
@@ -52,14 +53,15 @@ class Equation():
         self.result = eval(self.repr) # Solution
 
         # Initing the text
-        self.text = font.render(self.repr, 0, pg.Color('white'))
-        self.text_w = self.text.get_width()
-        self.text_h = self.text.get_height()
-
-        # Set the position relative to the column's top-left corner
-        self.text_x = col.rect.width // 2 - self.text_w // 2
-        self.text_y = col.rect.top
-
+        self.image = font.render(self.repr, 0, pg.Color('white')) # Which is text
+        text_w = self.image.get_width()
+        text_h = self.image.get_height()
+        self.rect = pg.Rect(
+            col.rect.width // 2 - text_w // 2,
+            col.rect.top,
+            text_w,
+            text_h
+        )
 
 class Column(pg.sprite.Sprite):
     def __init__(self, rect: pg.Rect, border_width, highlighted_width, input_height, font, col_group, input_group):
@@ -74,6 +76,12 @@ class Column(pg.sprite.Sprite):
         self.image = pg.Surface(self.rect.size)
         pg.draw.rect(self.image, pg.Color('white'),
                     ((0, 0), self.rect.size), self.border_width)
+        self.inside = pg.Rect(
+            self.border_width,
+            self.border_width,
+            self.rect.width - self.border_width*2,
+            self.rect.height - self.border_width*2
+        )
                 
         # The input field
         self.input_field = pg.sprite.Sprite(input_group)
@@ -87,33 +95,21 @@ class Column(pg.sprite.Sprite):
             ((0, 0), self.input_field.rect.size),
             self.border_width)
 
-        # The text
-        self.input_repr = str() 
 
-        # The list of equations
-        self.equations = list()
+        self.input_repr = str() # Input text
+        self.equations = list() # The list of equations
+        self.equation_group = pg.sprite.Group()
     
     def update(self, speed):
         for eq in self.equations:
-            eq.text_y += speed
+            eq.rect.top += speed
     
-    # Draw the column's content onto it
-    def render(self):
-
-        inside = (
-            self.border_width,
-            self.border_width,
-            self.rect.width - self.border_width*2,
-            self.rect.height - self.border_width*2
-        )
-        self.image.fill((0, 0, 0), inside)
-
-        for eq in self.equations:
-            self.image.blit(eq.text, (eq.text_x, eq.text_y))
+    def render_equations(self):
+        self.equation_group.draw(self.image)
     
     def generate_eq(self):
         self.equations.append(Equation(
-            self, random.randrange(2, 3), self.font
+            self, random.randrange(2, 3), self.font, self.equation_group
         ))
 
     # Get input from the input field
@@ -234,14 +230,17 @@ class Game:
                         self.columns[self.active].deactivate()
                         self.active = (self.active + 1) % self.config.columns
                         self.columns[self.active].activate()
-                    # elif k == K_SPACE:
-                    #     self.
+                    elif k == K_SPACE:
+                        self.columns[self.active].update(self.speed)
                     elif k == K_BACKSPACE or k in range(K_0, K_9 + 1):
                         self.columns[self.active].get_input(event.key)
             
 
             self.screen.fill((0, 0, 0))
-            self.col_group.update(self.speed)
+            # self.col_group.update(self.speed)
+            for col in self.columns:
+                col.image.fill((0, 0, 0), col.inside)
+                col.render_equations()
             self.col_group.draw(self.screen)
             self.input_group.draw(self.screen)
             pg.display.flip()
