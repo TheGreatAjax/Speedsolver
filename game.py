@@ -62,7 +62,7 @@ class Equation():
 
 
 class Column(pg.sprite.Sprite):
-    def __init__(self, rect: pg.Rect, border_width, highlighted_width, input_height, font, col_group):
+    def __init__(self, rect: pg.Rect, border_width, highlighted_width, input_height, font, col_group, input_group):
         super().__init__(col_group)
         self.rect = rect
         self.border_width = border_width
@@ -74,41 +74,42 @@ class Column(pg.sprite.Sprite):
         self.image = pg.Surface(self.rect.size)
         pg.draw.rect(self.image, pg.Color('white'),
                     ((0, 0), self.rect.size), self.border_width)
-
-        # Input text rendering parameters
-        self.input_rect = pg.Rect(
-                           0,
-                           self.rect.height - input_height,
-                           self.rect.width,
-                           input_height) # Place it on the bottom of the column
-        pg.draw.rect(self.image, pg.Color('white'),
-                    self.input_rect, self.border_width)  # Draw the border
+                
+        # The input field
+        self.input_field = pg.sprite.Sprite(input_group)
+        self.input_field.image = pg.Surface((self.rect.width, input_height))
+        self.input_field.rect = self.input_field.image.get_rect().move(
+            self.rect.left, self.rect.top + self.rect.height
+        )
+        pg.draw.rect(
+            self.input_field.image,
+            pg.Color('white'),
+            ((0, 0), self.input_field.rect.size),
+            self.border_width)
 
         # The text
-        self.input_repr = str()
+        self.input_repr = str() 
 
-        # Positon - relative to the column
-        self.input_x = self.input_rect.centerx
-        self.input_y = self.input_rect.centery
-        self.input_text = self.font.render('', 0, pg.Color('white'))
-
+        # The list of equations
         self.equations = list()
     
-    # Draw the column's content on the screen
-    def render(self, screen):
+    def update(self, speed):
+        for eq in self.equations:
+            eq.text_y += speed
+    
+    # Draw the column's content onto it
+    def render(self):
 
-        inside = self.rect.clip((
-            self.rect.left,
-            self.rect.top,
-            self.rect.width - self.highlighted_width,
-            self.rect.height - self.highlighted_width))
+        inside = (
+            self.border_width,
+            self.border_width,
+            self.rect.width - self.border_width*2,
+            self.rect.height - self.border_width*2
+        )
         self.image.fill((0, 0, 0), inside)
 
         for eq in self.equations:
             self.image.blit(eq.text, (eq.text_x, eq.text_y))
-        
-        # Draw the input
-        self.image.blit(self.input_text, (self.input_x, self.input_y))
     
     def generate_eq(self):
         self.equations.append(Equation(
@@ -116,7 +117,7 @@ class Column(pg.sprite.Sprite):
         ))
 
     # Get input from the input field
-    # key is assumed to be aither backspace or a number
+    # key is assumed to be either backspace or a number
     def get_input(self, key):
         changed = False
         if key == K_BACKSPACE and self.input_repr != '':
@@ -127,30 +128,51 @@ class Column(pg.sprite.Sprite):
             changed = True
         
         # Update the input parameters -
-        # place the text in the center of the input field
+        # render the text in the center of the input field
         if changed:
-            self.input_text = self.font.render(
+            input_text = self.font.render(
                 self.input_repr, 0, pg.Color('white')
             )
-            self.input_x = self.input_rect.centerx - self.input_text.get_width() // 2
-            self.input_y = self.input_rect.centery - self.input_text.get_height() // 2
+            input_x = (self.input_field.rect.width // 2 
+                - input_text.get_width() // 2)
+            input_y = (self.input_field.rect.height // 2
+                - input_text.get_height() // 2)
+
+            inside_input = (
+                self.highlighted_width,
+                self.highlighted_width,
+                self.input_field.rect.width - self.highlighted_width*2,
+                self.input_field.rect.height - self.highlighted_width*2
+            )
+            self.input_field.image.fill((0, 0, 0), inside_input)
+            self.input_field.image.blit(
+                input_text,
+                (input_x, input_y))
 
     # Highlight the input field
-    def activate(self):
-        pg.draw.rect(self.image, pg.Color('white'),
-                 self.input_rect, self.highlighted_width)  
+    def activate(self): 
+        pg.draw.rect(
+            self.input_field.image,
+            pg.Color('white'),
+            ((0, 0), self.input_field.rect.size),
+            self.highlighted_width)
     
     # Dehilight
     def deactivate(self):
         # Remove (blacken) the highlighted border
-        pg.draw.rect(self.image, pg.Color('black'), 
-            self.input_rect, self.highlighted_width)
-        pg.draw.rect(self.image, pg.Color('white'),
-            self.input_rect, self.highlighted_width) 
+        pg.draw.rect(
+            self.input_field.image,
+            pg.Color('black'),
+            ((0, 0), self.input_field.rect.size),
+            self.highlighted_width)
+        pg.draw.rect(
+            self.input_field.image,
+            pg.Color('white'),
+            ((0, 0), self.input_field.rect.size),
+            self.border_width)
 
 class Game:
 
-    # Methods
     def __init__(self, config: Config):
         self.screen = pg.display.get_surface()
         self.config = config
@@ -162,36 +184,30 @@ class Game:
         # Set the columns
         self.columns = []
         self.col_group = pg.sprite.Group()
+        self.input_group = pg.sprite.Group()
         for i in range(self.config.columns):
             col_rect = pg.Rect(
                 self.config.board_left + i * self.config.col_width,
                 -1,
                 self.config.col_width,
                 self.config.col_height)
-                
+
             col = Column(
                 col_rect,
                 self.config.border_width,
                 self.config.highlighted_width,
                 self.config.input_height,
                 self.config.font,
-                self.col_group)
+                self.col_group,
+                self.input_group)
             self.columns.append(col)
-        
-    def update(self):
 
-        # Move all the equations down
-        for col in self.columns:
-            for eq in col.equations:
-                eq.text_y += self.config.speed
-
-    # Draw the columns on the screen
-    def draw(self):
-        self.screen.fill((0, 0, 0))
-        for col in self.columns:
-            col.render(self.screen)
-        self.col_group.draw(self.screen)
-        pg.display.flip()
+    # # Draw the columns on the screen
+    # def draw(self):
+    #     self.screen.fill((0, 0, 0))
+    #     self.col_group.update()
+    #     self.col_group.draw(self.screen)
+    #     pg.display.flip()
     
     def pause():
         pass
@@ -218,11 +234,15 @@ class Game:
                         self.columns[self.active].deactivate()
                         self.active = (self.active + 1) % self.config.columns
                         self.columns[self.active].activate()
-                    elif k == K_SPACE:
-                        self.update() 
+                    # elif k == K_SPACE:
+                    #     self.
                     elif k == K_BACKSPACE or k in range(K_0, K_9 + 1):
                         self.columns[self.active].get_input(event.key)
             
-            self.draw()
 
+            self.screen.fill((0, 0, 0))
+            self.col_group.update(self.speed)
+            self.col_group.draw(self.screen)
+            self.input_group.draw(self.screen)
+            pg.display.flip()
 
