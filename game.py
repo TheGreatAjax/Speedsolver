@@ -126,6 +126,9 @@ class Column(pg.sprite.Sprite):
         # Update the input parameters -
         # render the text in the center of the input field
         if changed:
+            self.update_input()
+    
+    def update_input(self):
             input_text = self.font.render(
                 self.input_repr, 0, pg.Color('white')
             )
@@ -144,6 +147,7 @@ class Column(pg.sprite.Sprite):
             self.input_field.image.blit(
                 input_text,
                 (input_x, input_y))
+
 
     # Highlight the input field
     def activate(self): 
@@ -166,6 +170,27 @@ class Column(pg.sprite.Sprite):
             pg.Color('white'),
             ((0, 0), self.input_field.rect.size),
             self.border_width)
+    
+    # Validate the entered input
+    def validate(self, speed):
+
+        # If there is input entered and 
+        # there are equations on the track
+        if self.input_repr and self.equations:
+
+            # Correct input
+            last_eq = self.equations[-1]
+            if self.input_repr == str(last_eq.result):
+                self.equation_group.remove(last_eq)
+                self.equations = self.equations[:-1]
+                self.input_repr = ''
+                self.update_input()
+            
+            # Incorrent
+            # Punishment - move the equation down
+            else:
+                last_eq.rect.top += speed
+
 
 class Game:
 
@@ -197,13 +222,6 @@ class Game:
                 self.col_group,
                 self.input_group)
             self.columns.append(col)
-
-    # # Draw the columns on the screen
-    # def draw(self):
-    #     self.screen.fill((0, 0, 0))
-    #     self.col_group.update()
-    #     self.col_group.draw(self.screen)
-    #     pg.display.flip()
     
     def pause():
         pass
@@ -230,14 +248,18 @@ class Game:
                         self.columns[self.active].deactivate()
                         self.active = (self.active + 1) % self.config.columns
                         self.columns[self.active].activate()
-                    elif k == K_SPACE:
-                        self.columns[self.active].update(self.speed)
+
+                    # Get input into the active column's input field
                     elif k == K_BACKSPACE or k in range(K_0, K_9 + 1):
                         self.columns[self.active].get_input(event.key)
+                    elif k == K_SPACE:
+                        self.columns[self.active].update(self.speed)
+                    elif k == K_RETURN:
+                        self.columns[self.active].validate(self.speed)
+                        
             
 
             self.screen.fill((0, 0, 0))
-            # self.col_group.update(self.speed)
             for col in self.columns:
                 col.image.fill((0, 0, 0), col.inside)
                 col.render_equations()
