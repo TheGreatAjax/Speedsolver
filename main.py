@@ -12,19 +12,26 @@ def main():
 
     config = Config(
         board_left = int(width * 0.1),
-        board_top = 10,
+        board_top = -1,
         columns = 4,
-        col_width = int(width * 0.2),
+        col_width = int(width * 0.1),
         col_height = int(height * 0.9),
+        input_height = int(height * 0.9 * 0.1),
         border_width = 1,
         highlighted_width = 3,
-        input_height = int(height * 0.9 * 0.1),
         speed = 100,
-        increment = 1,
+        increment = 100 * 0.1,
         default_active=0,
-        font=pg.font.Font(None, int(width * 0.2 * 0.3)),
+        font=pg.font.Font(None, int(width * 0.2 * 0.2)),
         fps=60,
-        gen_frequency=500
+        gen_frequency=1000,
+        inc_frequency=10000,
+        score_rect=pg.Rect(
+            int(width * 0.8),
+            10,
+            int(width * 0.2),
+            300
+        )
     )
     game = Game(config)
     game.run()

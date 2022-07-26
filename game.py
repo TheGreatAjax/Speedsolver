@@ -1,5 +1,6 @@
 import pygame as pg
 from pygame.locals import *
+from score import Score
 import random
 from collections import deque
 
@@ -22,9 +23,13 @@ class Config:
             default_active: int,  # Index of the column
                                   # active by default
             font:           pg.font.Font,# Font size for equations
+            score_rect:     pg.Rect,
             fps:            int,
-            gen_frequency        # Frequency with which new
+            gen_frequency,        # Frequency with which new
+                                 # Equations get generated
                                  # Used in pg.clock.set_timer()
+            inc_frequency        # Frequency with which 
+                                 # The speed gets increased
                 ):
 
                 self.board_left = board_left
@@ -39,8 +44,10 @@ class Config:
                 self.increment = increment
                 self.default_active = default_active
                 self.font = font
+                self.score_rect = score_rect
                 self.fps = fps
                 self.get_frequency = gen_frequency
+                self.inc_frequency = inc_frequency
 
 # Equation which falls from the top of the screen
 class Equation(pg.sprite.Sprite):
@@ -139,13 +146,13 @@ class Column(pg.sprite.Sprite):
             self.equations.append(new_eq)
 
     # Get input from the input field
-    # key is assumed to be either backspace or a number
     def get_input(self, key):
         changed = False
         if key == K_BACKSPACE and self.input_repr != '':
             self.input_repr = self.input_repr[:-1]
             changed = True
-        else:
+        elif (key == K_MINUS and self.input_repr == ''
+            or key in range(K_0, K_9 + 1)):
             self.input_repr += chr(key)
             changed = True
         
@@ -191,6 +198,8 @@ class Column(pg.sprite.Sprite):
             pg.Color('black'),
             ((0, 0), self.input_field.rect.size),
             self.highlighted_width)
+        self.input_repr = ''
+        self.update_input()
         pg.draw.rect(
             self.input_field.image,
             pg.Color('white'),
@@ -198,11 +207,11 @@ class Column(pg.sprite.Sprite):
             self.border_width)
     
     # Validate the entered input
-    def validate(self, speed):
+    def validate(self, speed, score):
 
         # If there is input entered and 
         # there are equations on the track
-        if self.input_repr and self.equations:
+        if self.input_repr not in ['', '-'] and self.equations:
 
             # Correct input
             last_eq = self.equations[0]
@@ -211,11 +220,13 @@ class Column(pg.sprite.Sprite):
                 self.equations.popleft()
                 self.input_repr = ''
                 self.update_input()
+                score.update(abs(last_eq.result))
             
             # Incorrent
             # Punishment - move the equation down
             else:
                 last_eq.rect.top += speed
+                score.update(-abs(int(self.input_repr)))
 
 
 class Game:
@@ -235,7 +246,7 @@ class Game:
         for i in range(self.config.columns):
             col_rect = pg.Rect(
                 self.config.board_left + i * self.config.col_width,
-                -1,
+                self.config.board_top,
                 self.config.col_width,
                 self.config.col_height)
 
@@ -249,16 +260,19 @@ class Game:
                 self.input_group)
             self.columns.append(col)
     
-    def pause():
-        pass
-
     # Running the game
     def run(self):
-        # self.columns[0].generate_eq()
+        score = pg.sprite.GroupSingle(Score(
+            1, self.config.font, self.config.score_rect
+        ))
         self.columns[self.active].activate()
         clock = pg.time.Clock()
+
         GENERATE = USEREVENT + 1 # Generate new equation event
         pg.time.set_timer(GENERATE, self.config.get_frequency)
+
+        SPEEDUP = USEREVENT + 2  # Increase the game speed
+        pg.time.set_timer(SPEEDUP, self.config.inc_frequency)
         while 1:
             for event in pg.event.get():
                 if event.type == QUIT:
@@ -267,6 +281,8 @@ class Game:
                     # Generate new equation for a random column
                     # (even generation)
                     self.columns[random.randrange(0, self.config.columns)].generate_eq()
+                elif event.type == SPEEDUP:
+                    self.speed += self.config.increment
                 elif event.type == KEYDOWN:
 
                     k = event.key
@@ -283,10 +299,10 @@ class Game:
                         self.columns[self.active].activate()
 
                     # Get input into the active column's input field
-                    elif k == K_BACKSPACE or k in range(K_0, K_9 + 1):
+                    elif k in [K_BACKSPACE, K_MINUS] or k in range(K_0, K_9 + 1):
                         self.columns[self.active].get_input(event.key)
                     elif k == K_RETURN:
-                        self.columns[self.active].validate(self.speed)
+                        self.columns[self.active].validate(self.speed, score)
                         
             
 
@@ -297,6 +313,7 @@ class Game:
                 col.render_equations()
             self.col_group.draw(self.screen)
             self.input_group.draw(self.screen)
+            score.draw(self.screen)
             clock.tick(self.config.fps)
             pg.display.flip()
 
