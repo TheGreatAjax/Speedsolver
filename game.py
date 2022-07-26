@@ -11,9 +11,12 @@ class pauseMenu(pygame_menu.Menu):
         super().__init__('Pause', width, height,
              theme=pygame_menu.themes.THEME_DARK)
         self.back_to_menu = False
-        self.add.button('Resume', action=self.disable)
+        self.add.button('Resume', action=self.quit)
         self.add.button('Back to Main', action=self.set_back)
     
+    def quit(self):
+        self.disable()
+        pg.event.set_allowed(None)
     def set_back(self):
         self.back_to_menu = True
     
@@ -95,7 +98,7 @@ class Game:
         GENERATE = USEREVENT + 1 # Generate new equation event
         pg.time.set_timer(GENERATE, self.lvlConfig.gen_frequency)
 
-        SPEEDUP = USEREVENT + 2  # Increase the game speed
+        SPEEDUP = USEREVENT + 2  # Increase the game speed event
         pg.time.set_timer(SPEEDUP, self.lvlConfig.inc_frequency)
 
         # Create menus
@@ -106,6 +109,8 @@ class Game:
         gameoverM.set_absolute_position(self.columns_rect.left, self.columns_rect.top)
         gameoverM.disable()
 
+        paused = False # Paused iff either pause or gameover menu is active
+
         self.screen.fill((0, 0, 0))
         pg.display.flip()
         while 1:
@@ -113,39 +118,42 @@ class Game:
             for event in events:
                 if event.type == QUIT:
                     return
-                elif event.type == GENERATE:
-                    # Generate new equation for a random column
-                    # (even generation)
-                    self.columns[random.randrange(0, self.lvlConfig.columns)].generate_eq()
-                elif event.type == SPEEDUP:
-                    self.speed *= self.config.increment
-                elif event.type == KEYDOWN:
 
-                    k = event.key
-                    # Change active column to one to the left
-                    if k == K_LEFT:
-                        self.columns[self.active].deactivate()
-                        self.active = (self.active - 1) % self.lvlConfig.columns
-                        self.columns[self.active].activate()
-                    
-                    # Change active column to one to the right
-                    elif k == K_RIGHT:
-                        self.columns[self.active].deactivate()
-                        self.active = (self.active + 1) % self.lvlConfig.columns
-                        self.columns[self.active].activate()
+                if not paused:
+                    if event.type == GENERATE:
+                        # Generate new equation for a random column
+                        # (even generation)
+                        self.columns[random.randrange(0, self.lvlConfig.columns)].generate_eq()
+                    elif event.type == SPEEDUP:
+                        self.speed *= self.gameConfig.increment
+                    elif event.type == KEYDOWN:
 
-                    # Get input into the active column's input field
-                    elif k in [K_BACKSPACE, K_MINUS] or k in range(K_0, K_9 + 1):
-                        self.columns[self.active].get_input(event.key)
-                    
-                    # Check the input entered into the active field
-                    # And update the score
-                    elif k == K_RETURN:
-                        self.columns[self.active].check(self.speed, self.score)
+                        k = event.key
+                        # Change active column to one to the left
+                        if k == K_LEFT:
+                            self.columns[self.active].deactivate()
+                            self.active = (self.active - 1) % self.lvlConfig.columns
+                            self.columns[self.active].activate()
+                        
+                        # Change active column to one to the right
+                        elif k == K_RIGHT:
+                            self.columns[self.active].deactivate()
+                            self.active = (self.active + 1) % self.lvlConfig.columns
+                            self.columns[self.active].activate()
 
-                    # Pause the game
-                    elif k == K_ESCAPE:
-                        pauseM.enable()
+                        # Get input into the active column's input field
+                        elif k in [K_BACKSPACE, K_MINUS] or k in range(K_0, K_9 + 1):
+                            self.columns[self.active].get_input(event.key)
+                        
+                        # Check the input entered into the active field
+                        # And update the score
+                        elif k == K_RETURN:
+                            self.columns[self.active].check(self.speed, self.score)
+
+                        # Pause the game
+                        elif k == K_ESCAPE:
+                            paused = True
+                            pauseM.enable()
 
             if pauseM.is_enabled():
                 pauseM.draw(self.screen)
@@ -155,12 +163,14 @@ class Game:
                 if pauseM.back_to_menu:
                     pauseM.disable()
                     return
+            
             elif gameoverM.is_enabled():
                 gameoverM.draw(self.screen)
                 gameoverM.update(events)
                 pg.display.flip()
 
                 if gameoverM.back_to_menu:
+                    gameoverM.disable()
                     return
                 elif gameoverM.restart:
                     gameoverM.restart = False
@@ -171,9 +181,11 @@ class Game:
                 self.col_group.draw(self.screen)
                 self.input_group.draw(self.screen)
                 self.score.draw(self.screen)
+                paused = False
                 for col in self.columns:
                     gameover = col.update(self.speed / self.gameConfig.fps)
                     if gameover:
+                        paused = True
                         gameoverM.enable()
                         break
                 # pg.display.update([self.columns_rect, self.gameConfig.score_rect])
