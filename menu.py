@@ -1,3 +1,4 @@
+import pygame
 import pygame_menu
 from game import Game
 from config import load_config, load_level
@@ -5,7 +6,7 @@ from config import load_config, load_level
 class mainMenu(pygame_menu.Menu):
 
     def __init__(self, width, height):
-        super().__init__('Speedsolver', width, height)
+        super().__init__('Speedsolver', width, height, theme=pygame_menu.themes.THEME_DARK)
         self.lvl = 1
         self.add.button('Play!', action=self.start)
         self.add.selector('Difficulty: ', [

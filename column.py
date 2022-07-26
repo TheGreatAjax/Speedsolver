@@ -25,7 +25,6 @@ class Column(pg.sprite.Sprite):
         # The input field
         self.input_field = pg.sprite.Sprite(input_group)
         self.input_field.image = pg.Surface((self.rect.width, gameConfig.input_height))
-
       
         self.__setGraphics()
 
@@ -52,16 +51,24 @@ class Column(pg.sprite.Sprite):
             pg.Color('white'),
             ((0, 0), self.input_field.rect.size),
             self.border_width)
-        
-
     
     def update(self, speed):
+
+        self.image.fill((0, 0, 0), self.inside)
+        self.equation_group.draw(self.image)
+
+        # Check for gameover -
+        # The first equation hits the bottom
+        if self.equations:
+            first = self.equations[0]
+            if (first.rect.top + speed + first.rect.height
+                     >= self.rect.top + self.rect.height):
+                return True
+
         for eq in self.equations:
             eq.rect.top += speed
-    
-    def render_equations(self):
-        self.equation_group.draw(self.image)
-    
+        return False
+        
     def generate_eq(self):
         new_eq = Equation(
             self,
@@ -160,3 +167,9 @@ class Column(pg.sprite.Sprite):
             else:
                 last_eq.rect.top += speed
                 score.update(-abs(int(self.input_repr)))
+
+    def reset(self):
+        self.equation_group.empty()
+        self.input_repr = str()
+        self.update_input()
+        self.equations = deque()

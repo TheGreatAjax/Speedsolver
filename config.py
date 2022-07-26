@@ -36,6 +36,7 @@ class staticConfig:
 
 class levelConfig:
     def __init__(self, *,
+            lvl:            int,
             columns:        int, # Number of columns
             gen_frequency:  int, # Frequency with which new
                                  # Equations get generated
@@ -46,6 +47,7 @@ class levelConfig:
             operands_max:   int, # Maximum value an equation can contain
             operations:      list # Operators in the equations 
         ):
+        self.lvl = lvl
         self.columns = columns
         self.gen_frequency = gen_frequency
         self.inc_frequency = inc_frequency
@@ -64,7 +66,7 @@ def load_config():
         border_width = 1,
         highlighted_width = 3,
         default_active=0,
-        speed = 100,
+        speed = 500,
         increment = 1.1,
         font=pg.font.Font(None, int(width * 0.2 * 0.2)),
         fps=60,
@@ -80,6 +82,7 @@ def load_config():
 def load_level(lvl, cols=4):
     if lvl == 1:
         return levelConfig(
+            lvl=1,
             columns=cols,
             gen_frequency=2000,
             inc_frequency=60000,
