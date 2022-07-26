@@ -1,7 +1,29 @@
 
-from email.policy import default
-from game import Config, Game
+from game import Game
+from config import staticConfig, levelConfig, load_config, load_level
 import pygame as pg
+import pygame_menu as pg_menu
+
+class mainMenu(pg_menu.Menu):
+    def __init__(self, title, width, height):
+        super().__init__(title, width, height)
+        self.lvl = 1
+        self.config = load_config()
+        self.add.button('Play!', self.start)
+        self.add.selector('Difficulty: ', [
+            ('Easy', 1),
+            ('Medium', 2),
+            ('Hard', 3)
+        ], onchange=self.change_dif)
+        self.add.button('Exit', action=pg_menu.events.EXIT)
+    
+    def start(self):
+        lvlConfig = load_level(self.lvl)
+        game = Game(self.config, lvlConfig)
+        game.run()
+    
+    def change_dif(self, selected_val, dif):
+        self.lvl = dif
 
 def main():
     pg.init()
@@ -9,32 +31,8 @@ def main():
     # Create the main screen
     width, height = 1240, 800
     screen = pg.display.set_mode((width, height))
-
-    config = Config(
-        board_left = int(width * 0.1),
-        board_top = -1,
-        columns = 4,
-        col_width = int(width * 0.1),
-        col_height = int(height * 0.9),
-        input_height = int(height * 0.9 * 0.1),
-        border_width = 1,
-        highlighted_width = 3,
-        speed = 100,
-        increment = 100 * 0.1,
-        default_active=0,
-        font=pg.font.Font(None, int(width * 0.2 * 0.2)),
-        fps=60,
-        gen_frequency=1000,
-        inc_frequency=10000,
-        score_rect=pg.Rect(
-            int(width * 0.8),
-            10,
-            int(width * 0.2),
-            300
-        )
-    )
-    game = Game(config)
-    game.run()
+    main = mainMenu('Speedsolver', width, height)
+    main.mainloop(screen)
 
 if __name__ == '__main__':
     main()

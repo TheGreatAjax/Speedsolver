@@ -4,69 +4,22 @@ from score import Score
 import random
 from collections import deque
 
-# Struct containing all game's variables
-class Config:
-    def __init__(self, *,
-            board_left:     int,  # Position of the board
-                                  # relative to the screen        
-            board_top:      int,
-            col_width:      int,  # Columns' dimensions
-            col_height:     int,
-            border_width:   int,  # Width of a column's border
-            highlighted_width:int,# Width of a highlighed border 
-            columns:        int,  # Number of columns
-            input_height:   int,  # Height of the input field
-            speed:          int,  # Speed with which
-                                  # equations are falling
-                                  # Pixels per seconds
-            increment:      int,  # Speed increment
-            default_active: int,  # Index of the column
-                                  # active by default
-            font:           pg.font.Font,# Font size for equations
-            score_rect:     pg.Rect,
-            fps:            int,
-            gen_frequency,        # Frequency with which new
-                                 # Equations get generated
-                                 # Used in pg.clock.set_timer()
-            inc_frequency        # Frequency with which 
-                                 # The speed gets increased
-                ):
-
-                self.board_left = board_left
-                self.board_top = board_top
-                self.columns = columns
-                self.col_width = col_width
-                self.col_height = col_height
-                self.border_width = border_width
-                self.highlighted_width = highlighted_width
-                self.input_height = input_height
-                self.speed = speed
-                self.increment = increment
-                self.default_active = default_active
-                self.font = font
-                self.score_rect = score_rect
-                self.fps = fps
-                self.get_frequency = gen_frequency
-                self.inc_frequency = inc_frequency
-
 # Equation which falls from the top of the screen
 class Equation(pg.sprite.Sprite):
 
-    operands = [str(i) for i in range(1, 10)] # Possible operands
-    operations = ['+', '-', '*'] # Possible operators
-
-    def __init__(self, col, ops, font, eq_group):
+    def __init__(self, col, font, lvlConfig, eq_group):
         super().__init__(eq_group)
-        self.ops = ops # How many operands equation contains
-        self.repr = random.choice(self.operands) # String representation of the equation
-                                                 # operand-operation-operand-...
-        for _ in range (1, ops):
-            self.repr += random.choice(self.operations)
-            self.repr += random.choice(self.operands)
-        
+        self.range = lvlConfig.operands_range
+        self.operands = [str(i) for i in range(1, lvlConfig.operands_max + 1)]
+        self.operations = lvlConfig.operations
+
+        self.repr = self.generate()
         self.result = eval(self.repr) # Solution
 
-        # Initing the text
+        self.__setGraphics(col, font)
+
+    
+    def __setGraphics(self, col, font):
         self.image = font.render(self.repr, 0, pg.Color('white')) # Which is text
         text_w = self.image.get_width()
         text_h = self.image.get_height()
@@ -77,21 +30,43 @@ class Equation(pg.sprite.Sprite):
             text_h
         )
 
+    # Generate the equation
+    def generate(self):
+        eq = random.choice(self.operands) # String representation of the equation
+                                                 # operand-operation-operand-...
+        for _ in range (1, self.range):
+            eq += random.choice(self.operations)
+            eq += random.choice(self.operands)
+        return eq
+
+
 class Column(pg.sprite.Sprite):
     def __init__(self,
+                 gameConfig,
+                 lvlConfig,
                  rect: pg.Rect,
-                 border_width,
-                 highlighted_width,
-                 input_height,
-                 font,
                  col_group,
                  input_group):
         super().__init__(col_group)
+        self.border_width = gameConfig.border_width
+        self.highlighted_width = gameConfig.highlighted_width
+        self.input_height = gameConfig.input_height
+        self.lvlConfig = lvlConfig
+        self.font = gameConfig.font
         self.rect = rect
-        self.border_width = border_width
-        self.highlighted_width = highlighted_width
-        self.input_height = input_height
-        self.font = font
+
+        self.input_repr = str() # Input text
+        self.equations = deque() # The list of equations
+        self.equation_group = pg.sprite.Group()
+        
+        # The input field
+        self.input_field = pg.sprite.Sprite(input_group)
+        self.input_field.image = pg.Surface((self.rect.width, gameConfig.input_height))
+
+      
+        self.__setGraphics()
+
+    def __setGraphics(self):
 
         # Draw the column
         self.image = pg.Surface(self.rect.size)
@@ -103,12 +78,9 @@ class Column(pg.sprite.Sprite):
             self.rect.width - self.border_width*2,
             self.rect.height - self.border_width*2
         )
-                
-        # The input field
-        self.input_field = pg.sprite.Sprite(input_group)
-        self.input_field.image = pg.Surface((self.rect.width, input_height))
 
-        # Move it to the bottom of the column
+        # Draw the input field
+        # on the bottom of the column
         self.input_field.rect = self.input_field.image.get_rect().move( 
             self.rect.left, self.rect.top + self.rect.height
         )
@@ -117,10 +89,8 @@ class Column(pg.sprite.Sprite):
             pg.Color('white'),
             ((0, 0), self.input_field.rect.size),
             self.border_width)
+        
 
-        self.input_repr = str() # Input text
-        self.equations = deque() # The list of equations
-        self.equation_group = pg.sprite.Group()
     
     def update(self, speed):
         for eq in self.equations:
@@ -132,8 +102,8 @@ class Column(pg.sprite.Sprite):
     def generate_eq(self):
         new_eq = Equation(
             self,
-            random.randint(2, 3), 
             self.font, 
+            self.lvlConfig,
             self.equation_group
         )
 
@@ -231,71 +201,75 @@ class Column(pg.sprite.Sprite):
 
 class Game:
 
-    def __init__(self, config: Config):
+    def __init__(self, gameConfig, lvlConfig):
         self.screen = pg.display.get_surface()
-        self.config = config
+        self.gameConfig = gameConfig
+        self.lvlConfig = lvlConfig
 
         # Variables
-        self.speed = self.config.speed
-        self.active = config.default_active
+        self.speed = gameConfig.speed
+        self.active = gameConfig.default_active
 
         # Set the columns
         self.columns = []
         self.col_group = pg.sprite.Group()
         self.input_group = pg.sprite.Group()
-        for i in range(self.config.columns):
+
+        self.__setGraphics()
+    
+    def __setGraphics(self):
+        for i in range(self.lvlConfig.columns):
             col_rect = pg.Rect(
-                self.config.board_left + i * self.config.col_width,
-                self.config.board_top,
-                self.config.col_width,
-                self.config.col_height)
+                self.gameConfig.board_left + i * self.gameConfig.col_width,
+                self.gameConfig.board_top,
+                self.gameConfig.col_width,
+                self.gameConfig.col_height)
 
             col = Column(
+                self.gameConfig,
+                self.lvlConfig,
                 col_rect,
-                self.config.border_width,
-                self.config.highlighted_width,
-                self.config.input_height,
-                self.config.font,
                 self.col_group,
                 self.input_group)
             self.columns.append(col)
+
     
     # Running the game
     def run(self):
         score = pg.sprite.GroupSingle(Score(
-            1, self.config.font, self.config.score_rect
+            1, self.gameConfig.font, self.gameConfig.score_rect
         ))
         self.columns[self.active].activate()
         clock = pg.time.Clock()
 
         GENERATE = USEREVENT + 1 # Generate new equation event
-        pg.time.set_timer(GENERATE, self.config.get_frequency)
+        pg.time.set_timer(GENERATE, self.lvlConfig.gen_frequency)
 
         SPEEDUP = USEREVENT + 2  # Increase the game speed
-        pg.time.set_timer(SPEEDUP, self.config.inc_frequency)
+        pg.time.set_timer(SPEEDUP, self.lvlConfig.inc_frequency)
         while 1:
             for event in pg.event.get():
                 if event.type == QUIT:
                     return
-                elif event.type == GENERATE:
+                if event.type == GENERATE:
                     # Generate new equation for a random column
                     # (even generation)
-                    self.columns[random.randrange(0, self.config.columns)].generate_eq()
-                elif event.type == SPEEDUP:
-                    self.speed += self.config.increment
-                elif event.type == KEYDOWN:
+                    self.columns[random.randrange(0, self.lvlConfig.columns)].generate_eq()
+                if event.type == SPEEDUP:
+                    self.speed *= self.config.increment
+                if event.type == KEYDOWN:
 
                     k = event.key
                     # Change active column to one to the left
                     if k == K_LEFT:
                         self.columns[self.active].deactivate()
-                        self.active = (self.active - 1) % self.config.columns
+                        self.active = (self.active - 1) % self.lvlConfig.columns
                         self.columns[self.active].activate()
                     
                     # Change active column to one to the right
                     elif k == K_RIGHT:
                         self.columns[self.active].deactivate()
-                        self.active = (self.active + 1) % self.config.columns
+                        self.active = (self.active + 1) % self.lvlConfig.columns
                         self.columns[self.active].activate()
 
                     # Get input into the active column's input field
@@ -303,17 +277,16 @@ class Game:
                         self.columns[self.active].get_input(event.key)
                     elif k == K_RETURN:
                         self.columns[self.active].validate(self.speed, score)
-                        
             
 
             self.screen.fill((0, 0, 0))
             for col in self.columns:
                 col.image.fill((0, 0, 0), col.inside)
-                col.update(self.speed / self.config.fps)
                 col.render_equations()
+                col.update(self.speed / self.gameConfig.fps)
             self.col_group.draw(self.screen)
             self.input_group.draw(self.screen)
             score.draw(self.screen)
-            clock.tick(self.config.fps)
+            clock.tick(self.gameConfig.fps)
             pg.display.flip()
 
