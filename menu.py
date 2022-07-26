@@ -5,7 +5,7 @@ class pauseMenu(pygame_menu.Menu):
     def __init__(self, width, height):
         super().__init__('Pause', width, height,
              theme=pygame_menu.themes.THEME_DARK)
-        self.back_to_menu = False
+        self.back_to_menu = False # Whether 'Back to Main' button was pressed
         self.add.button('Resume', action=self.disable)
         self.add.button('Back to Main', action=self.set_back)
     
@@ -36,16 +36,15 @@ class mainMenu(pygame_menu.Menu):
     def __init__(self, width, height, play_action):
         super().__init__('Speedsolver', width, height,
                      theme=pygame_menu.themes.THEME_DARK)
-        self.lvl = 1
-        self.add.button('Play!', play_action, self.lvl)
-        self.add.selector('Difficulty: ', [
+        self.play_action = play_action
+        self.add.button('Play!', action=self.start)
+        self.dif = self.add.selector('Difficulty: ', [
             ('Easy', 1),
             ('Medium', 2),
             ('Hard', 3)
-        ], onchange=self.change_dif)
+        ])
         self.add.button('Exit', action=pygame_menu.events.EXIT)
 
-    
-    def change_dif(self, selected_val, dif):
-        self.lvl = dif
+    def start(self):
+        self.play_action(self.dif.get_value()[0][1])
 
