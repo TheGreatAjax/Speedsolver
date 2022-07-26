@@ -1,13 +1,13 @@
 
 from menu import mainMenu
-import pygame
+from pygame import init, display
 
 def main():
-    pygame.init()
+    init()
 
     # Create the main screen
     width, height = 1240, 800
-    screen = pygame.display.set_mode((width, height))
+    screen = display.set_mode((width, height))
 
     # Create and run the main menu
     main = mainMenu(width, height)

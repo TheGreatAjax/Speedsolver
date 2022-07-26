@@ -72,7 +72,7 @@ def load_config():
         default_active    = 0,
         speed             = 100,
         increment         = 1.1,
-        font              = pg.font.Font(None, int(width * 0.2 * 0.2)),
+        font              = pg.font.Font(None, int(width * 0.1 * 0.25)),
         fps               = 60,
         score_rect        = pg.Rect(
                                 int(width * 0.8),
@@ -109,7 +109,7 @@ def load_level(lvl, cols=4):
             columns        = cols,
             gen_frequency  = 1500,
             inc_frequency  = 10000,
-            operands_range = 4,
+            operands_range = 3,
             operands_max   = 20,
             operations     = ['+', '-', '*', '/']
         )
