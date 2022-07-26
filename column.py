@@ -5,12 +5,14 @@ from collections import deque
 
 class Column(pg.sprite.Sprite):
     def __init__(self,
+                 index,
                  gameConfig,
                  lvlConfig,
                  rect: pg.Rect,
                  col_group,
                  input_group):
         super().__init__(col_group)
+        self.index = index
         self.border_width = gameConfig.border_width
         self.highlighted_width = gameConfig.highlighted_width
         self.input_height = gameConfig.input_height

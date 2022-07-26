@@ -18,7 +18,6 @@ class Game:
         self.active = gameConfig.default_active
 
         # Columns
-        self.columns = []
         self.col_group = pg.sprite.Group()
         self.input_group = pg.sprite.Group()
 
@@ -44,27 +43,29 @@ class Game:
                 self.gameConfig.col_width,
                 self.gameConfig.col_height)
             col = Column(
+                i,
                 self.gameConfig,
                 self.lvlConfig,
                 col_rect,
                 self.col_group,
                 self.input_group)
-            self.columns.append(col)  
     
-    def reset(self):
+    def reset(self, active_col):
         self.score.sprite.reset()
-        for col in self.columns:
+        for col in self.col_group.sprites():
             col.reset()
         self.speed = self.gameConfig.speed
-        self.columns[self.active].deactivate()
-        self.active = self.gameConfig.default_active
-        self.columns[self.active].activate()
+        active_col.deactivate()
+        active_col = self.col_group.sprites()[self.gameConfig.default_active]
+        active_col.activate()
 
     # Running the game
     def run(self):
        
         clock = pg.time.Clock()
-        self.columns[self.active].activate()
+        # self.columns[self.active].activate()
+        active_col = self.col_group.sprites()[self.gameConfig.default_active]
+        active_col.activate()
 
         GENERATE = USEREVENT + 1 # Generate new equation event
         pg.time.set_timer(GENERATE, self.lvlConfig.gen_frequency)
@@ -95,7 +96,7 @@ class Game:
 
                     if event.type == GENERATE:
                         # Generate new equation for a random column
-                        self.columns[random.randrange(0, self.lvlConfig.columns)].generate_eq()
+                        self.col_group.sprites()[random.randrange(0, self.lvlConfig.columns)].generate_eq()
                     
                     elif event.type == SPEEDUP:
                         self.speed *= self.gameConfig.increment
@@ -103,26 +104,25 @@ class Game:
                     elif event.type == KEYDOWN:
 
                         k = event.key
-                        # Change active column to one to the left
-                        if k == K_LEFT:
-                            self.columns[self.active].deactivate()
-                            self.active = (self.active - 1) % self.lvlConfig.columns
-                            self.columns[self.active].activate()
-                        
-                        # Change active column to one to the right
-                        elif k == K_RIGHT:
-                            self.columns[self.active].deactivate()
-                            self.active = (self.active + 1) % self.lvlConfig.columns
-                            self.columns[self.active].activate()
+                        # Change active column to one to the left or the right
+                        if k in [K_LEFT, K_RIGHT]:
+                            active_col.deactivate()
+                            if k == K_LEFT:
+                                new_active = active_col.index - 1
+                            else:
+                                new_active = active_col.index + 1
+                            new_active %= self.lvlConfig.columns
+                            active_col = self.col_group.sprites()[new_active]
+                            active_col.activate() 
 
                         # Get input into the active column's input field
                         elif k in [K_BACKSPACE, K_MINUS] or k in range(K_0, K_9 + 1):
-                            self.columns[self.active].get_input(event.key)
+                            active_col.get_input(event.key)
                         
                         # Check the input entered into the active field
                         # And update the score
                         elif k == K_RETURN:
-                            self.columns[self.active].check(self.speed, self.score)
+                            active_col.check(self.speed, self.score)
 
                         # Pause the game
                         elif k == K_ESCAPE:
@@ -150,7 +150,7 @@ class Game:
                     return
                 elif gameoverM.restart:
                     gameoverM.restart = False
-                    self.reset()
+                    self.reset(active_col)
                     gameoverM.disable()
             
             # Else display and update the game
@@ -163,7 +163,7 @@ class Game:
                 # Check for gameover when updating columns
                 # (whether an equation hits the bottom)
                 paused = False
-                for col in self.columns:
+                for col in self.col_group.sprites():
                     gameover = col.update(self.speed / self.gameConfig.fps)
                     if gameover:
                         paused = True
