@@ -5,6 +5,7 @@ from score import Score
 from menu import pauseMenu, gameoverMenu
 import random
 
+# The main game class
 class Game:
 
     def __init__(self, gameConfig, lvlConfig):
@@ -16,15 +17,19 @@ class Game:
         self.speed = gameConfig.speed
         self.active = gameConfig.default_active
 
+        # Columns
         self.columns = []
         self.col_group = pg.sprite.Group()
         self.input_group = pg.sprite.Group()
+
+        # The score
         self.score = pg.sprite.GroupSingle(Score(
             lvlConfig.lvl, self.gameConfig.font, self.gameConfig.score_rect
         ))
 
         self.__setGraphics()
     
+    # Set columns to their correct positions
     def __setGraphics(self):
         self.columns_rect = pg.Rect(
             self.gameConfig.board_left,
@@ -85,13 +90,16 @@ class Game:
                 if event.type == QUIT:
                     return
 
+                # Check game-related events iff not paused
                 if not paused:
+
                     if event.type == GENERATE:
                         # Generate new equation for a random column
-                        # (even generation)
                         self.columns[random.randrange(0, self.lvlConfig.columns)].generate_eq()
+                    
                     elif event.type == SPEEDUP:
                         self.speed *= self.gameConfig.increment
+                    
                     elif event.type == KEYDOWN:
 
                         k = event.key
@@ -121,6 +129,7 @@ class Game:
                             paused = True
                             pauseM.enable()
 
+            # Display pause menu
             if pauseM.is_enabled():
                 pauseM.draw(self.screen)
                 pauseM.update(events)
@@ -130,6 +139,7 @@ class Game:
                     pauseM.disable()
                     return
             
+            # Display gameover menu
             elif gameoverM.is_enabled():
                 gameoverM.draw(self.screen)
                 gameoverM.update(events)
@@ -142,11 +152,16 @@ class Game:
                     gameoverM.restart = False
                     self.reset()
                     gameoverM.disable()
+            
+            # Else display and update the game
             else:
                 self.screen.fill((0, 0, 0))
                 self.col_group.draw(self.screen)
                 self.input_group.draw(self.screen)
                 self.score.draw(self.screen)
+
+                # Check for gameover when updating columns
+                # (whether an equation hits the bottom)
                 paused = False
                 for col in self.columns:
                     gameover = col.update(self.speed / self.gameConfig.fps)

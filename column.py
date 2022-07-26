@@ -52,6 +52,8 @@ class Column(pg.sprite.Sprite):
             ((0, 0), self.input_field.rect.size),
             self.border_width)
     
+    # Render and move down the equations
+    # Return True if gameover, False otherwise
     def update(self, speed):
 
         self.image.fill((0, 0, 0), self.inside)
@@ -69,6 +71,7 @@ class Column(pg.sprite.Sprite):
             eq.rect.top += speed
         return False
         
+    # Generate new equation for the column
     def generate_eq(self):
         new_eq = Equation(
             self,
@@ -77,7 +80,7 @@ class Column(pg.sprite.Sprite):
             self.equation_group
         )
 
-        # Generate only if it doesn't stack right
+        # Generate only if it doesn't stack
         # on top of the last equation in the column
         if (self.equations and
             new_eq.rect.top + new_eq.rect.height*2 >= self.equations[-1].rect.top):
@@ -92,7 +95,7 @@ class Column(pg.sprite.Sprite):
             self.input_repr = self.input_repr[:-1]
             changed = True
         elif (key == K_MINUS and self.input_repr == ''
-            or key in range(K_0, K_9 + 1)):
+              or key in range(K_0, K_9 + 1)):
             self.input_repr += chr(key)
             changed = True
         
@@ -121,7 +124,6 @@ class Column(pg.sprite.Sprite):
                 input_text,
                 (input_x, input_y))
 
-
     # Highlight the input field
     def activate(self): 
         pg.draw.rect(
@@ -130,7 +132,7 @@ class Column(pg.sprite.Sprite):
             ((0, 0), self.input_field.rect.size),
             self.highlighted_width)
     
-    # Dehilight
+    # Dehighlight
     def deactivate(self):
         # Remove (blacken) the highlighted border
         pg.draw.rect(
@@ -146,15 +148,17 @@ class Column(pg.sprite.Sprite):
             ((0, 0), self.input_field.rect.size),
             self.border_width)
     
-    # check the entered input
+    # Check the entered input
+    # whether it matches with the first equation
     def check(self, speed, score):
 
         # If there is input entered and 
         # there are equations on the track
         if self.input_repr not in ['', '-'] and self.equations:
 
-            # Correct input
             last_eq = self.equations[0]
+
+            # Correct input
             if self.input_repr == str(last_eq.result):
                 self.equation_group.remove(last_eq)
                 self.equations.popleft()
@@ -168,6 +172,7 @@ class Column(pg.sprite.Sprite):
                 last_eq.rect.top += speed
                 score.update(-abs(int(self.input_repr)))
 
+    # Clean the column
     def reset(self):
         self.equation_group.empty()
         self.input_repr = str()

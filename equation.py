@@ -15,11 +15,12 @@ class Equation(pg.sprite.Sprite):
 
         self.__setGraphics(col, font)
 
+    # Place in the middle top of its column
     def __setGraphics(self, col, font):
         self.image = font.render(self.repr, 0, pg.Color('white')) # Which is text
         text_w = self.image.get_width()
         text_h = self.image.get_height()
-        self.rect = pg.Rect(    # Place in the upper middle of its column
+        self.rect = pg.Rect(    
             col.rect.width // 2 - text_w // 2,
             col.rect.top,
             text_w,
@@ -32,10 +33,7 @@ class Equation(pg.sprite.Sprite):
                                           # operand-operation-operand-...
         for _ in range (1, self.range):
             op = random.choice(self.operations)
-            # self.operations.remove(op)    # Disallow same operations
             eq += op
             eq += random.choice(self.operands)
         
-        # if self.range > 2:
-
         return eq
