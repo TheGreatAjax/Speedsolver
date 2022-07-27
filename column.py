@@ -54,7 +54,7 @@ class Column(pg.sprite.Sprite):
             ((0, 0), self.input_field.rect.size),
             self.border_width)
 
-        inside_input = (
+        self.inside_input = (
             self.highlighted_width,
             self.highlighted_width,
             self.input_field.rect.width - self.highlighted_width*2,
