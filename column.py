@@ -53,6 +53,13 @@ class Column(pg.sprite.Sprite):
             pg.Color('white'),
             ((0, 0), self.input_field.rect.size),
             self.border_width)
+        
+        inside_input = (
+            self.highlighted_width,
+            self.highlighted_width,
+            self.input_field.rect.width - self.highlighted_width*2,
+            self.input_field.rect.height - self.highlighted_width*2
+        )
     
     # Render and move down the equations
     # Return True if gameover, False otherwise
@@ -92,17 +99,18 @@ class Column(pg.sprite.Sprite):
 
     # Get input from the input field
     def get_input(self, key):
-        changed = False
         if key == K_BACKSPACE and self.input_repr != '':
             self.input_repr = self.input_repr[:-1]
-            changed = True
-        elif (key == K_MINUS and self.input_repr == ''
-              or key in range(K_0, K_9 + 1)):
+        elif key == K_MINUS and self.input_repr == '':
             self.input_repr += chr(key)
-            changed = True
+        else:
+            # Make sure the input isn't too long
+            if len(self.input_repr + chr(key)) > 5:
+                return
+            else:
+                self.input_repr += chr(key)
         
-        if changed:
-            self.update_input()
+        self.update_input()
     
     # Update the input parameters -
     # render the text in the center of the input field
@@ -115,13 +123,8 @@ class Column(pg.sprite.Sprite):
             input_y = (self.input_field.rect.height // 2
                 - input_text.get_height() // 2)
 
-            inside_input = (
-                self.highlighted_width,
-                self.highlighted_width,
-                self.input_field.rect.width - self.highlighted_width*2,
-                self.input_field.rect.height - self.highlighted_width*2
-            )
-            self.input_field.image.fill((0, 0, 0), inside_input)
+           
+            self.input_field.image.fill((0, 0, 0), self.inside_input)
             self.input_field.image.blit(
                 input_text,
                 (input_x, input_y))
