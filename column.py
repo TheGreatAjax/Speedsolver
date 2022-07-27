@@ -17,7 +17,7 @@ class Column(pg.sprite.Sprite):
         self.highlighted_width = gameConfig.highlighted_width
         self.input_height = gameConfig.input_height
         self.lvlConfig = lvlConfig
-        self.font = gameConfig.font
+        self.font = pg.font.Font(gameConfig.font_path, 16)
         self.rect = rect
 
         self.input_repr = str() # Input text

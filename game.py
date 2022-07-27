@@ -23,7 +23,10 @@ class Game:
 
         # The score
         self.score = pg.sprite.GroupSingle(Score(
-            lvlConfig.lvl, lvlConfig.columns, self.gameConfig.font, self.gameConfig.score_rect
+            lvlConfig.lvl,
+            lvlConfig.columns,
+            pg.font.Font(self.gameConfig.font_path, 30),
+            self.gameConfig.score_rect
         ))
 
         self.__setGraphics()

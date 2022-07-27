@@ -19,7 +19,7 @@ class staticConfig:
             increment:      int,  # Speed increment [percentage]
             default_active: int,  # Index of the column
                                   # active by default
-            font:           pg.font.Font,
+            font_path:      str,  
             fps:            int,
     ):
                 self.board_left = board_left
@@ -32,7 +32,7 @@ class staticConfig:
                 self.speed = speed
                 self.increment = increment
                 self.default_active = default_active
-                self.font = font
+                self.font_path = font_path
                 self.score_rect = score_rect
                 self.fps = fps
 
@@ -72,7 +72,7 @@ def load_config():
         default_active    = 0,
         speed             = 100,
         increment         = 1.05,
-        font              = pg.font.Font(None, int(width * 0.1 * 0.3)),
+        font_path         = './PressStart2P-vaV7.ttf',
         fps               = 60,
         score_rect        = pg.Rect(
                                 int(width * 0.8),
