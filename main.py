@@ -16,6 +16,7 @@ def main():
     # Create the main screen
     width, height = 1240, 800
     screen = display.set_mode((width, height))
+    display.set_caption('Speedsolver')
 
     # Create and run the main menu
     main = mainMenu(width, height, play_action=start)
