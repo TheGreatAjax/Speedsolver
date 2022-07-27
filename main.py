@@ -4,9 +4,9 @@ from menu import mainMenu
 from game import Game
 from config import load_config, load_level
 
-def start(lvl):
+def start(lvl, cols=4):
     config = load_config()
-    lvlConfig = load_level(lvl)
+    lvlConfig = load_level(lvl, cols)
     game = Game(config, lvlConfig)
     game.run()
 

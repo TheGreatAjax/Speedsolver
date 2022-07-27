@@ -23,7 +23,7 @@ class Game:
 
         # The score
         self.score = pg.sprite.GroupSingle(Score(
-            lvlConfig.lvl, self.gameConfig.font, self.gameConfig.score_rect
+            lvlConfig.lvl, lvlConfig.columns, self.gameConfig.font, self.gameConfig.score_rect
         ))
 
         self.__setGraphics()
@@ -156,9 +156,6 @@ class Game:
             # Else display and update the game
             else:
                 self.screen.fill((0, 0, 0))
-                self.col_group.draw(self.screen)
-                self.input_group.draw(self.screen)
-                self.score.draw(self.screen)
 
                 # Check for gameover when updating columns
                 # (whether an equation hits the bottom)
@@ -169,7 +166,10 @@ class Game:
                         paused = True
                         gameoverM.enable()
                         break
-                # pg.display.update([self.columns_rect, self.gameConfig.score_rect])
+                self.col_group.draw(self.screen)
+                self.input_group.draw(self.screen)
+                self.score.draw(self.screen)
+
                 pg.display.flip()
 
             clock.tick(self.gameConfig.fps)

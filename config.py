@@ -71,8 +71,8 @@ def load_config():
         highlighted_width = 3,
         default_active    = 0,
         speed             = 100,
-        increment         = 1.1,
-        font              = pg.font.Font(None, int(width * 0.1 * 0.25)),
+        increment         = 1.05,
+        font              = pg.font.Font(None, int(width * 0.1 * 0.3)),
         fps               = 60,
         score_rect        = pg.Rect(
                                 int(width * 0.8),
@@ -82,7 +82,7 @@ def load_config():
     )
     return gameConfig
 
-def load_level(lvl, cols=4):
+def load_level(lvl, cols):
     if lvl == 1:
         return levelConfig(
             lvl            = 1,
@@ -90,7 +90,7 @@ def load_level(lvl, cols=4):
             gen_frequency  = 2000,
             inc_frequency  = 30000,
             operands_range = 2,
-            operands_max   = 9,
+            operands_max   = 10,
             operations     = ['+', '-']
         )
     elif lvl == 2:
@@ -100,7 +100,7 @@ def load_level(lvl, cols=4):
             gen_frequency  = 1700,
             inc_frequency  = 15000,
             operands_range = 3,
-            operands_max   = 15,
+            operands_max   = 10,
             operations     = ['+', '-', '*']
         )
     else:
@@ -111,5 +111,5 @@ def load_level(lvl, cols=4):
             inc_frequency  = 10000,
             operands_range = 3,
             operands_max   = 20,
-            operations     = ['+', '-', '*', '/']
+            operations     = ['+', '-', '*']
         )

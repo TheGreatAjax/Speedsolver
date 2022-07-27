@@ -43,8 +43,14 @@ class mainMenu(pygame_menu.Menu):
             ('Medium', 2),
             ('Hard', 3)
         ])
+        self.cols = self.add.selector('Tracks: ', [
+            (str(i), i) for i in range(4, 7) 
+        ])
+
         self.add.button('Exit', action=pygame_menu.events.EXIT)
 
     def start(self):
-        self.play_action(self.dif.get_value()[0][1])
+        dif = self.dif.get_value()[0][1]
+        cols = self.cols.get_value()[0][1]
+        self.play_action(dif, cols)
 
