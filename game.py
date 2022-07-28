@@ -9,6 +9,8 @@ import random
 class Game:
 
     def __init__(self, gameConfig, lvlConfig):
+
+        # Save the config
         self.screen = pg.display.get_surface()
         self.gameConfig = gameConfig
         self.lvlConfig = lvlConfig
@@ -31,7 +33,7 @@ class Game:
 
         self.__setGraphics()
     
-    # Set columns to their correct positions
+    # Create and set columns to their correct positions
     def __setGraphics(self):
         self.columns_rect = pg.Rect(
             self.gameConfig.board_left,
@@ -45,29 +47,29 @@ class Game:
                 self.gameConfig.board_top,
                 self.gameConfig.col_width,
                 self.gameConfig.col_height)
-            col = Column(
+            self.col_group.add(Column(
                 i,
                 self.gameConfig,
                 self.lvlConfig,
                 col_rect,
-                self.col_group,
-                self.input_group)
+                self.input_group))
+        self.columns = self.col_group.sprites() # Alias
     
+    # Reset the game
     def reset(self, active_col):
         self.score.sprite.reset()
-        for col in self.col_group.sprites():
+        for col in self.columns:
             col.reset()
         self.speed = self.gameConfig.speed
         active_col.deactivate()
-        active_col = self.col_group.sprites()[self.gameConfig.default_active]
+        active_col = self.columns[self.gameConfig.default_active]
         active_col.activate()
 
     # Running the game
     def run(self):
        
         clock = pg.time.Clock()
-        # self.columns[self.active].activate()
-        active_col = self.col_group.sprites()[self.gameConfig.default_active]
+        active_col = self.columns[self.gameConfig.default_active]
         active_col.activate()
 
         GENERATE = USEREVENT + 1 # Generate new equation event
@@ -99,7 +101,7 @@ class Game:
 
                     if event.type == GENERATE:
                         # Generate new equation for a random column
-                        self.col_group.sprites()[random.randrange(0, self.lvlConfig.columns)].generate_eq()
+                        self.columns[random.randrange(0, self.lvlConfig.columns)].generate_eq()
                     
                     elif event.type == SPEEDUP:
                         self.speed *= self.gameConfig.increment
@@ -115,7 +117,7 @@ class Game:
                             else:
                                 new_active = active_col.index + 1
                             new_active %= self.lvlConfig.columns
-                            active_col = self.col_group.sprites()[new_active]
+                            active_col = self.columns[new_active]
                             active_col.activate() 
 
                         # Get input into the active column's input field
@@ -163,7 +165,7 @@ class Game:
                 # Check for gameover when updating columns
                 # (whether an equation hits the bottom)
                 paused = False
-                for col in self.col_group.sprites():
+                for col in self.columns:
                     gameover = col.update(self.speed / self.gameConfig.fps)
                     if gameover:
                         paused = True
@@ -173,6 +175,7 @@ class Game:
                 self.input_group.draw(self.screen)
                 self.score.draw(self.screen)
 
+                # pg.display.update([self.columns_rect, self.gameConfig.score_rect])
                 pg.display.flip()
 
             clock.tick(self.gameConfig.fps)

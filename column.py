@@ -9,9 +9,8 @@ class Column(pg.sprite.Sprite):
                  gameConfig,
                  lvlConfig,
                  rect: pg.Rect,
-                 col_group,
                  input_group):
-        super().__init__(col_group)
+        super().__init__()
         self.index = index
         self.border_width = gameConfig.border_width
         self.highlighted_width = gameConfig.highlighted_width
@@ -30,6 +29,7 @@ class Column(pg.sprite.Sprite):
       
         self.__setGraphics()
 
+    # Place the column and its input field in correct position
     def __setGraphics(self):
 
         # Draw the column
@@ -69,7 +69,7 @@ class Column(pg.sprite.Sprite):
         self.equation_group.draw(self.image)
 
         # Check for gameover -
-        # The first equation hits the bottom
+        # whether the first equation hits the bottom
         if self.equations:
             first = self.equations[0]
             if (first.rect.top + speed + first.rect.height
@@ -99,10 +99,15 @@ class Column(pg.sprite.Sprite):
 
     # Get input from the input field
     def get_input(self, key):
+
+        # Backspace can be pressed only on non-empty string
         if key == K_BACKSPACE and self.input_repr != '':
             self.input_repr = self.input_repr[:-1]
+
+        # Minus can be inserted only in the beginning
         elif key == K_MINUS and self.input_repr == '':
             self.input_repr += chr(key)
+
         else:
             # Make sure the input isn't too long
             if len(self.input_repr + chr(key)) > 5:
