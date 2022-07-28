@@ -2,7 +2,7 @@ import pygame as pg
 from pygame.locals import *
 from column import Column
 from score import Score
-from menu import pauseMenu, gameoverMenu
+from menu import menuEnum, pauseMenu, gameoverMenu
 import random
 
 # The main game class
@@ -140,9 +140,14 @@ class Game:
                 pauseM.update(events)
                 pg.display.flip()
 
-                if pauseM.back_to_menu:
+                if pauseM.state == menuEnum.BACK_TO_MENU:
                     pauseM.disable()
                     return
+                elif pauseM.state == menuEnum.RESUME:
+                    pauseM.state = menuEnum.OPEN
+                    pauseM.disable()
+                    self.screen.fill((0, 0, 0))
+                    pg.display.flip()
             
             # Display gameover menu
             elif gameoverM.is_enabled():
@@ -150,11 +155,11 @@ class Game:
                 gameoverM.update(events)
                 pg.display.flip()
 
-                if gameoverM.back_to_menu:
+                if gameoverM.state == menuEnum.BACK_TO_MENU:
                     gameoverM.disable()
                     return
-                elif gameoverM.restart:
-                    gameoverM.restart = False
+                elif gameoverM.state == menuEnum.RESTART:
+                    gameoverM.state = menuEnum.OPEN
                     self.reset(active_col)
                     gameoverM.disable()
             
@@ -171,12 +176,15 @@ class Game:
                         paused = True
                         gameoverM.enable()
                         break
+
+                # Draw the game elements
                 self.col_group.draw(self.screen)
                 self.input_group.draw(self.screen)
                 self.score.draw(self.screen)
 
-                # pg.display.update([self.columns_rect, self.gameConfig.score_rect])
-                pg.display.flip()
+                # Update only parts of the screen containing 
+                # the game elements
+                pg.display.update([self.columns_rect, self.gameConfig.score_rect])
 
             clock.tick(self.gameConfig.fps)
 

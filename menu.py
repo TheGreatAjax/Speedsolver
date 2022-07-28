@@ -1,16 +1,25 @@
 import pygame_menu
+from enum import Enum
+
+class menuEnum(Enum):
+    OPEN = 0,
+    BACK_TO_MENU = 1,
+    RESUME = 2,
+    RESTART = 3
 
 class pauseMenu(pygame_menu.Menu):
     
     def __init__(self, width, height):
         super().__init__('Pause', width, height,
              theme=pygame_menu.themes.THEME_DARK)
-        self.back_to_menu = False # Whether 'Back to Main' button was pressed
-        self.add.button('Resume', action=self.disable)
+        self.state = menuEnum.OPEN
+        self.add.button('Resume', action=self.resume)
         self.add.button('Back to Main', action=self.set_back)
     
+    def resume(self):
+        self.state = menuEnum.RESUME
     def set_back(self):
-        self.back_to_menu = True
+        self.state = menuEnum.BACK_TO_MENU
     
 class gameoverMenu(pygame_menu.Menu):
 
@@ -20,16 +29,15 @@ class gameoverMenu(pygame_menu.Menu):
         mytheme.title_bar_style=pygame_menu.widgets.MENUBAR_STYLE_NONE
         super().__init__('GAME OVER!', width, height, theme=mytheme)
 
-        self.restart = False
-        self.back_to_menu = False
+        self.state = menuEnum.OPEN
         self.add.button('Restart', action=self.set_restart)
         self.add.button('Back to Main', action=self.set_back)
         self.add.button('Quit', action=pygame_menu.events.EXIT)
     
     def set_restart(self):
-        self.restart = True
+        self.state = menuEnum.RESTART
     def set_back(self):
-        self.back_to_menu = True
+        self.state = menuEnum.BACK_TO_MENU
 
 class mainMenu(pygame_menu.Menu):
 
