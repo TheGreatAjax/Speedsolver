@@ -87,18 +87,18 @@ def load_level(lvl, cols):
         return levelConfig(
             lvl            = 1,
             columns        = cols,
-            gen_frequency  = 2000,
-            inc_frequency  = 30000,
+            gen_frequency  = 3000,
+            inc_frequency  = 20000,
             operands_range = 2,
-            operands_max   = 10,
+            operands_max   = 20,
             operations     = ['+', '-']
         )
     elif lvl == 2:
         return levelConfig(
             lvl            = 2,
             columns        = cols,
-            gen_frequency  = 1700,
-            inc_frequency  = 15000,
+            gen_frequency  = 2700,
+            inc_frequency  = 17000,
             operands_range = 3,
             operands_max   = 10,
             operations     = ['+', '-', '*']
@@ -107,8 +107,8 @@ def load_level(lvl, cols):
        return levelConfig(
             lvl            = 3,
             columns        = cols,
-            gen_frequency  = 1500,
-            inc_frequency  = 10000,
+            gen_frequency  = 2500,
+            inc_frequency  = 15000,
             operands_range = 3,
             operands_max   = 20,
             operations     = ['+', '-', '*']
