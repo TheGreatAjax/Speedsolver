@@ -101,12 +101,14 @@ class Column(pg.sprite.Sprite):
     def get_input(self, key):
 
         # Backspace can be pressed only on non-empty string
-        if key == K_BACKSPACE and self.input_repr != '':
-            self.input_repr = self.input_repr[:-1]
+        if key == K_BACKSPACE:
+            if self.input_repr != '':
+                self.input_repr = self.input_repr[:-1]
 
         # Minus can be inserted only in the beginning
-        elif key == K_MINUS and self.input_repr == '':
-            self.input_repr += chr(key)
+        elif key == K_MINUS:
+            if self.input_repr == '':
+                self.input_repr += chr(key)
 
         else:
             # Make sure the input isn't too long
@@ -144,6 +146,7 @@ class Column(pg.sprite.Sprite):
     
     # Dehighlight
     def deactivate(self):
+
         # Remove (blacken) the highlighted border
         pg.draw.rect(
             self.input_field.image,
