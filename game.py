@@ -16,7 +16,8 @@ class Game:
         self.lvlConfig = lvlConfig
 
         # Variables
-        self.speed = gameConfig.speed
+        self.game_speed = gameConfig.speed
+        self.generation_speed = lvlConfig.gen_frequency
         self.active = gameConfig.default_active
 
         # Columns
@@ -60,7 +61,8 @@ class Game:
         self.score.sprite.reset()
         for col in self.columns:
             col.reset()
-        self.speed = self.gameConfig.speed
+        self.game_speed = self.gameConfig.speed
+        self.generation_speed = self.lvlConfig.gen_frequency
         active_col.deactivate()
         active_col = self.columns[self.gameConfig.default_active]
         active_col.activate()
@@ -104,7 +106,10 @@ class Game:
                         self.columns[random.randrange(0, self.lvlConfig.columns)].generate_eq()
                     
                     elif event.type == SPEEDUP:
-                        self.speed *= self.gameConfig.increment
+                        self.game_speed *= self.gameConfig.increment
+                        self.generation_speed *= self.gameConfig.increment
+                        pg.time.set_timer(GENERATE, self.lvlConfig.gen_frequency)
+
                     
                     elif event.type == KEYDOWN:
 
@@ -127,7 +132,7 @@ class Game:
                         # Check the input entered into the active field
                         # And update the score
                         elif k == K_RETURN:
-                            active_col.check(self.speed, self.score)
+                            active_col.check(self.game_speed, self.score)
 
                         # Pause the game
                         elif k == K_ESCAPE:
@@ -171,7 +176,7 @@ class Game:
                 # (whether an equation hits the bottom)
                 paused = False
                 for col in self.columns:
-                    gameover = col.update(self.speed / self.gameConfig.fps)
+                    gameover = col.update(self.game_speed / self.gameConfig.fps)
                     if gameover:
                         paused = True
                         gameoverM.enable()
