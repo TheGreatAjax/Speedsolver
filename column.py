@@ -178,9 +178,9 @@ class Column(pg.sprite.Sprite):
                 score.update(abs(first_eq.result))
             
             # Incorrent
-            # Punishment - move the equation down
+            # Penalty - move the equation down
             else:
-                first_eq.rect.top += speed
+                first_eq.rect.top += speed // 2
                 score.update(-abs(int(self.input_repr) - first_eq.result))
 
     def reset(self):
