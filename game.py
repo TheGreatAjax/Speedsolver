@@ -17,7 +17,7 @@ class Game:
 
         # Variables
         self.game_speed = gameConfig.speed
-        self.generation_speed = lvlConfig.gen_frequency
+        self.generation_frequency = lvlConfig.gen_frequency
         self.active = gameConfig.default_active
 
         # Columns
@@ -31,6 +31,12 @@ class Game:
             pg.font.Font(self.gameConfig.font_path, 30),
             self.gameConfig.score_rect
         ))
+
+        # Events
+        self.GENERATE = USEREVENT + 1 # Generate new equation event
+        self.SPEEDUP = USEREVENT + 2  # Increase the game speed event
+
+        self.paused = False
 
         self.__setGraphics()
     
@@ -55,28 +61,34 @@ class Game:
                 col_rect,
                 self.input_group))
         self.columns = self.col_group.sprites() # Alias
+        self.active_col = self.columns[self.gameConfig.default_active]
     
-    def reset(self, active_col):
+    def reset(self):
         self.score.sprite.reset()
         for col in self.columns:
             col.reset()
         self.game_speed = self.gameConfig.speed
-        self.generation_speed = self.lvlConfig.gen_frequency
-        active_col.deactivate()
-        active_col = self.columns[self.gameConfig.default_active]
-        active_col.activate()
+        self.generation_frequency = self.lvlConfig.gen_frequency
+
+        self.active_col.deactivate()
+        self.active_col = self.columns[self.gameConfig.default_active]
+        self.active_col.activate()
+
+        pg.time.set_timer(self.GENERATE, self.generation_frequency)
+        pg.time.set_timer(self.SPEEDUP, self.lvlConfig.inc_frequency)
+
+        pg.event.clear()
+
+        self.paused = False
 
     def run(self):
        
         clock = pg.time.Clock()
-        active_col = self.columns[self.gameConfig.default_active]
-        active_col.activate()
+        self.active_col = self.columns[self.gameConfig.default_active]
+        self.active_col.activate()
 
-        GENERATE = USEREVENT + 1 # Generate new equation event
-        pg.time.set_timer(GENERATE, self.lvlConfig.gen_frequency)
-
-        SPEEDUP = USEREVENT + 2  # Increase the game speed event
-        pg.time.set_timer(SPEEDUP, self.lvlConfig.inc_frequency)
+        pg.time.set_timer(self.GENERATE, self.lvlConfig.gen_frequency)
+        pg.time.set_timer(self.SPEEDUP, self.lvlConfig.inc_frequency)
 
         # Create menus
         pauseM = pauseMenu(self.screen.get_width(), self.screen.get_height())
@@ -86,7 +98,7 @@ class Game:
         gameoverM.set_absolute_position(self.columns_rect.left, self.columns_rect.top)
         gameoverM.disable()
 
-        paused = False # Paused iff either pause or gameover menu is active
+        self.paused = False # paused iff either pause or gameover menu is active
 
         self.screen.fill((0, 0, 0))
         pg.display.flip()
@@ -96,45 +108,44 @@ class Game:
                 if event.type == QUIT:
                     return
 
-                # Check game-related events iff not paused
-                if not paused:
+                # Check game-related events iff not self.paused
+                if not self.paused:
 
-                    if event.type == GENERATE:
+                    if event.type == self.GENERATE:
                         # Generate new equation for a random column
                         self.columns[random.randrange(0, self.lvlConfig.columns)].generate_eq()
                     
-                    elif event.type == SPEEDUP:
+                    elif event.type == self.SPEEDUP:
                         self.game_speed *= self.gameConfig.increment
-                        self.generation_speed *= self.gameConfig.increment
-                        pg.time.set_timer(GENERATE, self.lvlConfig.gen_frequency)
+                        self.generation_frequency = self.generation_frequency // self.gameConfig.increment
+                        pg.time.set_timer(self.GENERATE, int(self.generation_frequency))
 
-                    
                     elif event.type == KEYDOWN:
 
                         k = event.key
                         # Change active column to one to the left or the right
                         if k in [K_LEFT, K_RIGHT]:
-                            active_col.deactivate()
+                            self.active_col.deactivate()
                             if k == K_LEFT:
-                                new_active = active_col.index - 1
+                                new_active = self.active_col.index - 1
                             else:
-                                new_active = active_col.index + 1
+                                new_active = self.active_col.index + 1
                             new_active %= self.lvlConfig.columns
-                            active_col = self.columns[new_active]
-                            active_col.activate() 
+                            self.active_col = self.columns[new_active]
+                            self.active_col.activate() 
 
                         # Get input into the active column's input field
                         elif k in [K_BACKSPACE, K_MINUS] or k in range(K_0, K_9 + 1):
-                            active_col.get_input(event.key)
+                            self.active_col.get_input(event.key)
                         
                         # Check the input entered into the active field
                         # And update the score
                         elif k == K_RETURN:
-                            active_col.check(self.game_speed, self.score)
+                            self.active_col.check(self.game_speed, self.score)
 
                         # Pause the game
                         elif k == K_ESCAPE:
-                            paused = True
+                            self.paused = True
                             pauseM.enable()
 
             # Display pause menu
@@ -163,27 +174,29 @@ class Game:
                     return
                 elif gameoverM.state == menuEnum.RESTART:
                     gameoverM.state = menuEnum.OPEN
-                    self.reset(active_col)
                     gameoverM.disable()
+                    self.reset()
+                    self.screen.fill((0, 0, 0))
+                    pg.display.flip()
             
             # Else display and update the game
             else:
                 self.screen.fill((0, 0, 0))
 
-                # Check for gameover when updating columns
-                # (whether an equation hits the bottom)
-                paused = False
-                for col in self.columns:
-                    gameover = col.update(self.game_speed / self.gameConfig.fps)
-                    if gameover:
-                        paused = True
-                        gameoverM.enable()
-                        break
-
                 # Draw the game elements
                 self.col_group.draw(self.screen)
                 self.input_group.draw(self.screen)
                 self.score.draw(self.screen)
+
+                # Check for gameover when updating columns
+                # (whether an equation hits the bottom)
+                self.paused = False
+                for col in self.columns:
+                    gameover = col.update(self.game_speed / self.gameConfig.fps)
+                    if gameover:
+                        gameoverM.enable()
+                        self.paused = True
+                        break
 
                 # Update only parts of the screen containing 
                 # the game elements
