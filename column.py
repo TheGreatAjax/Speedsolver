@@ -167,21 +167,21 @@ class Column(pg.sprite.Sprite):
         # there are equations on the track
         if self.input_repr not in ['', '-'] and self.equations:
 
-            last_eq = self.equations[0]
+            first_eq = self.equations[0]
 
             # Correct input
-            if self.input_repr == str(last_eq.result):
-                self.equation_group.remove(last_eq)
+            if self.input_repr == str(first_eq.result):
+                self.equation_group.remove(first_eq)
                 self.equations.popleft()
                 self.input_repr = ''
                 self.update_input()
-                score.update(abs(last_eq.result))
+                score.update(abs(first_eq.result))
             
             # Incorrent
             # Punishment - move the equation down
             else:
-                last_eq.rect.top += speed
-                score.update(-abs(int(self.input_repr)))
+                first_eq.rect.top += speed
+                score.update(-abs(int(self.input_repr) - first_eq.result))
 
     def reset(self):
         self.equation_group.empty()
