@@ -97,7 +97,6 @@ class Column(pg.sprite.Sprite):
         else:
             self.equations.append(new_eq)
 
-    # Get input from the input field
     def get_input(self, key):
 
         # Backspace can be pressed only on non-empty string
@@ -119,8 +118,7 @@ class Column(pg.sprite.Sprite):
         
         self.update_input()
     
-    # Update the input parameters -
-    # render the text in the center of the input field
+    # Render the text in the center of the input field
     def update_input(self):
             input_text = self.font.render(
                 self.input_repr, 0, pg.Color('white')
@@ -153,16 +151,16 @@ class Column(pg.sprite.Sprite):
             pg.Color('black'),
             ((0, 0), self.input_field.rect.size),
             self.highlighted_width)
-        self.input_repr = ''
-        self.update_input()
         pg.draw.rect(
             self.input_field.image,
             pg.Color('white'),
             ((0, 0), self.input_field.rect.size),
             self.border_width)
+
+        self.input_repr = ''
+        self.update_input()
     
-    # Check the entered input
-    # whether it matches with the first equation
+    # Whether entered input matches first equation
     def check(self, speed, score):
 
         # If there is input entered and 
@@ -185,7 +183,6 @@ class Column(pg.sprite.Sprite):
                 last_eq.rect.top += speed
                 score.update(-abs(int(self.input_repr)))
 
-    # Clean the column
     def reset(self):
         self.equation_group.empty()
         self.input_repr = str()

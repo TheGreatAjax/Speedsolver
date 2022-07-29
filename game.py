@@ -56,7 +56,6 @@ class Game:
                 self.input_group))
         self.columns = self.col_group.sprites() # Alias
     
-    # Reset the game
     def reset(self, active_col):
         self.score.sprite.reset()
         for col in self.columns:
@@ -67,7 +66,6 @@ class Game:
         active_col = self.columns[self.gameConfig.default_active]
         active_col.activate()
 
-    # Running the game
     def run(self):
        
         clock = pg.time.Clock()

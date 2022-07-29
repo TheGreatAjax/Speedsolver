@@ -6,9 +6,9 @@ class Equation(pg.sprite.Sprite):
 
     def __init__(self, col, font, lvlConfig, eq_group):
         super().__init__(eq_group)
-        self.range = random.randint(2, lvlConfig.operands_range)
-        self.operands = [str(i) for i in range(1, lvlConfig.operands_max + 1)]
-        self.operations = lvlConfig.operations
+        self.range = random.randint(2, lvlConfig.operands_range) # Range of numbers of operands
+        self.operands = [str(i) for i in range(1, lvlConfig.operands_max + 1)] # The operands
+        self.operations = lvlConfig.operations # The operations
 
         self.repr = self.generate()
         self.result = eval(self.repr) # Solution
@@ -27,7 +27,6 @@ class Equation(pg.sprite.Sprite):
             text_h
         )
 
-    # Generate the equation
     def generate(self):
         eq = random.choice(self.operands) # String representation of the equation
                                           # operand-operation-operand-...
